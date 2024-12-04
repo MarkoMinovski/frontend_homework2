@@ -7,14 +7,16 @@ async function generateChoices() {
     const demo_limit = 5
     let choices = []
 
-    for (let i = 0; i < demo_limit; i++) {
-        choices.push(all[Math.floor(Math.random() * all.length)]);
+    while (choices.length < demo_limit) {
+        const indexToAccessInAllArray = Math.floor(Math.random() * all.length)
+        if (!choices.includes(all[indexToAccessInAllArray]))
+            choices.push(all[indexToAccessInAllArray]);
     }
 
     return choices
 }
 
-function TickerOptions({onTickerSelect}) {
+function TickerOptions({onTickerSelect, optionsReady}) {
     const [options, setOptions] = useState([])
 
 
@@ -23,6 +25,10 @@ function TickerOptions({onTickerSelect}) {
         async function getChoices() {
             const op = await generateChoices();
             setOptions(op);
+
+            if (op.length > 0 && optionsReady) {
+                optionsReady(op[0])
+            }
         }
 
         getChoices();
@@ -66,6 +72,11 @@ export function Table() {
         fetchData();
     }, [selectedTicker]);
 
+
+    const handleDefaultSelection = (defaultTicker) => {
+        setSelectedTicker(defaultTicker.ticker);
+    }
+
     const tableData = tickerData ? tickerData.map(row =>
         <tr key={row.date_str}>
             <td>{row.date_str}</td>
@@ -83,7 +94,7 @@ export function Table() {
     return ( <>
             <div className={"selection-and-text"}>
                 <p>Select ticker:</p>
-                <TickerOptions onTickerSelect={setSelectedTicker}></TickerOptions>
+                <TickerOptions onTickerSelect={setSelectedTicker} optionsReady={handleDefaultSelection}></TickerOptions>
             </div>
 
             <table className={"stats_table"}>
@@ -101,7 +112,7 @@ export function Table() {
                 </tr>
                 </thead>
                 <tbody>
-                {tableData || <td colSpan="5" rowSpan="5">
+                {tableData || <td colSpan="9" rowSpan="9">
                     No info
                 </td>}
                 </tbody>
